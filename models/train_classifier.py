@@ -16,6 +16,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, T
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import classification_report
 
 nltk.download(['punkt', 'wordnet', 'stopwords'])
 lemmatizer = nltk.stem.wordnet.WordNetLemmatizer()
@@ -39,21 +40,21 @@ def tokenize(text):
 def build_model():
 
     pipeline = Pipeline([('tfidf', TfidfVectorizer(tokenizer=tokenize)),
-                         ('svd', TruncatedSVD(n_components=50)),
-                         ('clf', MultiOutputClassifier(RandomForestClassifier()))])
+                         ('clf', MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1))],
+                         verbose=True)
 
-    parameters = {'clf__estimator__max_depth': [50, 100],
-                  'clf__estimator__min_samples_split': [2, 4],
-                  'clf__estimator__n_estimators': [50, 100]}
+    parameters = {'clf__estimator__max_depth': [None, 5, 10],
+                  'clf__estimator__n_estimators': [50, 100, 150]}
 
     cv = GridSearchCV(pipeline, parameters)
     return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    
-    Y_pred = model.predict(X_test)
 
+    Y_pred = model.predict(X_test)
+    Y_pred = pd.DataFrame (Y_pred, columns = Y_test.columns)
+    
     for i in range(len(category_names)):
         print('Evaluation for category: ' + category_names[i])
         print(classification_report(Y_test.iloc[:, i], Y_pred.iloc[:, i]))
@@ -76,7 +77,7 @@ def main():
         
         print('Training model...')
         model.fit(X_train, Y_train)
-        
+
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
 
