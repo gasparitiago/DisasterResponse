@@ -38,8 +38,12 @@ def clean_data(df):
     categories = pd.Series(df['categories']).str.split(';', expand=True)
     
     # Gets the first line to use as the columns names
+    # removing the '-0' or '-1' from the end of the string
     row = categories.iloc(0)[0]
     category_colnames = list(row)
+    for i in range(len(category_colnames)):
+        category_colnames[i] = category_colnames[i][:-2]
+
     categories.columns = category_colnames
     
     # For each column created, replace the values by just the last character
