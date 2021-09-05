@@ -53,11 +53,15 @@ def clean_data(df):
         categories[column] = categories[column].astype(str).str[-1]
         # convert column from string to numeric
         categories[column] = categories[column].astype(int)
-    
+
+    # Remove rows that have '2' on any of the columns
+    categories = categories[~(categories == 2).any(axis=1)]
+
     # Remove the original categories column and replace with the new columns
     df.drop(columns=['categories'], inplace=True)
     df = df.join(categories)
     df.drop_duplicates(inplace=True)
+
     return df
     
 

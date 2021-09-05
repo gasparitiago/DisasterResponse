@@ -23,6 +23,18 @@ lemmatizer = nltk.stem.wordnet.WordNetLemmatizer()
 stop_words = stopwords.words("english")
 
 def load_data(database_filepath):
+    """
+    Load the data from sql database
+
+    Args:
+    database_filepath -- path of sql file containing the database
+
+    Returns:
+    X, Y and columns names, being:
+    X -- the messages used to train the classifier.
+    Y -- categories labels.
+    columns -- list of categories names.
+    """
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql('select * from DisasterResponse', con=engine)
     X = df['message']
@@ -30,6 +42,15 @@ def load_data(database_filepath):
     return X, Y, Y.columns
 
 def tokenize(text):
+    """
+    Clean, tokenize and lemmatize a message.
+
+    Args:
+    text -- text message from diaster messages dataset.
+
+    Returns:
+    list of tokens from the input message.
+    """
     text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
     tokens = word_tokenize(text)
     clean_tokens = [lemmatizer.lemmatize(word)
@@ -38,7 +59,15 @@ def tokenize(text):
 
 
 def build_model():
+    """
+    Create the model pipeline that will be used to train the data.
 
+    Returns:
+    A GridSearchCV object with a Sklearn pipeline
+    containing the operations performed in the data to train a model:
+    - Usage of a TfidfVectorizer based on the tokenize function.
+    - Usage of a MultiOutputClassifier with a RandomForestClassifier.
+    """
     pipeline = Pipeline([('tfidf', TfidfVectorizer(tokenizer=tokenize)),
                          ('clf', MultiOutputClassifier(RandomForestClassifier(), n_jobs=-1))],
                          verbose=True)
@@ -53,10 +82,20 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """
+    Evaluate a model in a test set, printing the
+    classification metrics for all the dataset categories.
 
+    Args:
+    model -- machine learning model or pipeline responsible
+             for classifiying the data
+    X_test -- input columns of the test data (messages)
+    Y_test -- output columns of the test data (categories)
+    category_names -- names of the categories of Y data.
+    """
     Y_pred = model.predict(X_test)
     Y_pred = pd.DataFrame (Y_pred, columns = Y_test.columns)
-    
+
     for i in range(len(category_names)):
         print('Evaluation for category: ' + category_names[i])
         print(classification_report(Y_test.iloc[:, i], Y_pred.iloc[:, i]))
@@ -64,6 +103,13 @@ def evaluate_model(model, X_test, Y_test, category_names):
 
 
 def save_model(model, model_filepath):
+    """
+    Save trained model in a pickle file.
+
+    Args:
+    model -- trained model.
+    model_filepath -- output model filepath.
+    """
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
