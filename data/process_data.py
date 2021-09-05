@@ -51,11 +51,12 @@ def clean_data(df):
     for column in categories:
         # set each value to be the last character of the string
         categories[column] = categories[column].astype(str).str[-1]
-        # convert column from string to numeric
-        categories[column] = categories[column].astype(int)
 
     # Remove rows that have '2' on any of the columns
     categories = categories[~(categories == 2).any(axis=1)]
+
+    for column in categories:
+        categories[column] = categories[column].astype(int)
 
     # Remove the original categories column and replace with the new columns
     df.drop(columns=['categories'], inplace=True)
